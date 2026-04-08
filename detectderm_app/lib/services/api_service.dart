@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // my PC's IP address ──
+  // ── Change this to your PC's IP address ──
   static const String baseUrl = 'http://192.168.1.76:5000';
 
   // ── Register new user ────────────────────
