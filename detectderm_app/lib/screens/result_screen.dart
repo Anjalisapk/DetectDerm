@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ResultScreen extends StatelessWidget {
-  final Map<String, dynamic> result; // Result data from prediction
+  final Map<String, dynamic> result;
 
   const ResultScreen({super.key, required this.result});
 
@@ -37,9 +37,56 @@ class ResultScreen extends StatelessWidget {
     }
   }
 
+  // ── Warning color per disease ────────────
+  Color _getWarningColor(String diseaseEn) {
+    switch (diseaseEn) {
+      case 'Melanoma':
+        return Colors.red;
+      case 'Actinic Keratosis':
+        return Colors.orange;
+      case 'Benign Keratosis':
+        return Colors.blue;
+      case 'Melanocytic Nevus':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // ── Warning icon per disease ─────────────
+  IconData _getWarningIcon(String diseaseEn) {
+    switch (diseaseEn) {
+      case 'Melanoma':
+        return Icons.warning_amber_rounded;
+      case 'Actinic Keratosis':
+        return Icons.wb_sunny_rounded;
+      case 'Benign Keratosis':
+        return Icons.info_rounded;
+      case 'Melanocytic Nevus':
+        return Icons.check_circle_rounded;
+      default:
+        return Icons.info_rounded;
+    }
+  }
+
+  // ── Warning text per disease ─────────────
+  String _getWarningText(String diseaseEn) {
+    switch (diseaseEn) {
+      case 'Melanoma':
+        return '⚠️ यो गम्भीर रोग हो! तुरुन्तै छालाविज्ञ डाक्टरकहाँ जानुहोस्!';
+      case 'Actinic Keratosis':
+        return '⚠️ यो क्यान्सर पूर्वको अवस्था हो! चाँडै डाक्टर देखाउनुहोस्!';
+      case 'Benign Keratosis':
+        return 'ℹ️ यो सामान्य रोग हो तर डाक्टरसँग एकपटक check गराउनुहोस्।';
+      case 'Melanocytic Nevus':
+        return '✅ यो सामान्य तिल हो! तर परिवर्तन भएमा डाक्टर देखाउनुहोस्।';
+      default:
+        return 'डाक्टरसँग परामर्श लिनुहोस्।';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Extract result data
     final diseaseEn = result['disease_en'] ?? 'Unknown';
     final diseaseNp = result['disease_np'] ?? 'अज्ञात';
     final adviceNp = result['advice_np'] ?? '';
@@ -52,7 +99,6 @@ class ResultScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
 
-      // ── App Bar ───────────────────────────
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
         automaticallyImplyLeading: false,
@@ -61,7 +107,6 @@ class ResultScreen extends StatelessWidget {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          // Home button
           IconButton(
             icon: const Icon(Icons.home, color: Colors.white),
             onPressed: () {
@@ -80,8 +125,7 @@ class ResultScreen extends StatelessWidget {
             // ── Offline Badge ─────────────────
             if (isOffline)
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: Colors.orange[50],
@@ -90,8 +134,7 @@ class ResultScreen extends StatelessWidget {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.wifi_off,
-                        color: Colors.orange, size: 18),
+                    Icon(Icons.wifi_off, color: Colors.orange, size: 18),
                     SizedBox(width: 8),
                     Text(
                       'Offline Mode — TFLite model use भयो',
@@ -118,8 +161,6 @@ class ResultScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-
-                  // Disease icon
                   Container(
                     width: 80,
                     height: 80,
@@ -136,7 +177,6 @@ class ResultScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Nepali disease name
                   Text(
                     diseaseNp,
                     style: TextStyle(
@@ -149,7 +189,6 @@ class ResultScreen extends StatelessWidget {
 
                   const SizedBox(height: 4),
 
-                  // English disease name
                   Text(
                     diseaseEn,
                     style: TextStyle(
@@ -161,10 +200,8 @@ class ResultScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Confidence score
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: diseaseColor,
                       borderRadius: BorderRadius.circular(20),
@@ -201,8 +238,6 @@ class ResultScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  // Advice header
                   Row(
                     children: [
                       Icon(Icons.medical_information,
@@ -220,7 +255,6 @@ class ResultScreen extends StatelessWidget {
 
                   const Divider(height: 24),
 
-                  // Advice text
                   Text(
                     adviceNp,
                     style: const TextStyle(
@@ -235,34 +269,35 @@ class ResultScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Warning for Melanoma ──────────
-            if (diseaseEn == 'Melanoma')
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.red[300]!),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded,
-                        color: Colors.red, size: 28),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '⚠️ यो गम्भीर रोग हो! तुरुन्तै '
-                        'छालाविज्ञ डाक्टरकहाँ जानुहोस्!',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+            // ── NEW Warning Box for ALL diseases ─────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _getWarningColor(diseaseEn).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _getWarningColor(diseaseEn)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _getWarningIcon(diseaseEn),
+                    color: _getWarningColor(diseaseEn),
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _getWarningText(diseaseEn),
+                      style: TextStyle(
+                        color: _getWarningColor(diseaseEn),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
 
             const SizedBox(height: 16),
 
@@ -274,8 +309,7 @@ class ResultScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text(
-                '⚠️ यो app AI आधारित छ — '
-                'final diagnosis को लागि डाक्टरकहाँ जानुहोस्।',
+                '⚠️ यो app AI आधारित छ — final diagnosis को लागि डाक्टरकहाँ जानुहोस्।',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey,
