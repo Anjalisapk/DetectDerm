@@ -32,7 +32,45 @@ class _PreviewScreenState extends State<PreviewScreen> {
     setState(() => _isAnalyzing = false);
 
     if (!mounted) return;
-
+     // ── Not a skin disease ────────────────
+    if (result['error'] == 'not_skin') {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(
+            Icons.image_not_supported,
+            color: Colors.orange,
+            size: 48,
+          ),
+          title: const Text(
+            'छाला रोग भेटिएन!',
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            result['message'] ?? 'Clear photo खिच्नुस्!',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);  // Dialog बन्द
+                  Navigator.pop(context);  // Home मा जान्छ
+                },
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('अर्को Photo खिच्नुस्'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E7D32),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    } 
     // Check for error
     if (result.containsKey('error') && result['error'] != 'offline') {
       ScaffoldMessenger.of(context).showSnackBar(

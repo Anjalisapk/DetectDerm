@@ -173,71 +173,117 @@ class ApiService {
 
   // ── Offline predict (TFLite) ─────────────
   static Future<Map<String, dynamic>> predictOffline(
-      String imagePath) async {
-    try {
-      // Load TFLite model from assets
-      final interpreter = await Interpreter.fromAsset(
-        'assets/models/detectderm_model.tflite',
-      );
+    String imagePath) async {
+  try {
+    final imageFile = File(imagePath);
+    final imageBytes = await imageFile.readAsBytes();
+    img.Image? image = img.decodeImage(imageBytes);
+    image = img.copyResize(image!, width: 224, height: 224);
 
-      // Read and preprocess image
-      final imageFile = File(imagePath);
-      final imageBytes = await imageFile.readAsBytes();
-      img.Image? image = img.decodeImage(imageBytes);
-      image = img.copyResize(image!, width: 224, height: 224);
+    // ── Image Quality Check ───────────────
+    double totalBrightness = 0;
+    List<double> pixelValues = [];
 
-      // Convert image to float array [1, 224, 224, 3]
-      var input = List.generate(
-        1,
-        (_) => List.generate(
-          224,
-          (y) => List.generate(
-            224,
-            (x) {
-              final pixel = image!.getPixel(x, y);
-              return [
-                img.getRed(pixel) / 255.0,
-                img.getGreen(pixel) / 255.0,
-                img.getBlue(pixel) / 255.0,
-              ];
-            },
-          ),
-        ),
-      );
-
-      // Output array [1, 4] → 4 diseases
-      var output = List.generate(1, (_) => List.filled(4, 0.0));
-
-      // Run model
-      interpreter.run(input, output);
-      interpreter.close();
-
-      // Find highest confidence class
-      final scores = output[0];
-      int predictedClass = 0;
-      double maxScore = scores[0];
-      for (int i = 1; i < scores.length; i++) {
-        if (scores[i] > maxScore) {
-          maxScore = scores[i];
-          predictedClass = i;
-        }
+    for (int y = 0; y < 224; y++) {
+      for (int x = 0; x < 224; x++) {
+        final pixel = image.getPixel(x, y);
+        final brightness = (pixel.r + pixel.g + pixel.b) / 3;
+        totalBrightness += brightness;
+        pixelValues.add(brightness.toDouble());
       }
-
-      final confidence = (maxScore * 100).toStringAsFixed(2);
-      final disease = diseases[predictedClass];
-
-      return {
-        'scan_id': 0, // No scan_id in offline mode
-        'disease_en': disease['name_en'],
-        'disease_np': disease['name_np'],
-        'advice_np': disease['advice_np'],
-        'confidence': '$confidence%',
-        'is_offline': true, // Offline flag
-      };
-    } catch (e) {
-      return {'error': 'Prediction failed: $e'};
     }
+
+    final avgBrightness = totalBrightness / (224 * 224);
+
+    // Variance calculate
+    double totalVariance = 0;
+    for (var val in pixelValues) {
+      totalVariance += (val - avgBrightness) * (val - avgBrightness);
+    }
+    final variance = totalVariance / pixelValues.length;
+
+    // Too dark
+    if (avgBrightness < 30) {
+      return {
+        'error': 'not_skin',
+        'message': 'Photo धेरै अँध्यारो छ!\n'
+            'राम्रो प्रकाशमा छालाको photo खिच्नुस्।',
+      };
+    }
+
+    // Too uniform - not skin (solid color/black/white)
+    if (variance < 150) {
+      return {
+        'error': 'not_skin',
+        'message': 'यो छालाको photo होइन!\n'
+            'छालाको affected area को\n'
+            'नजिकबाट clear photo खिच्नुस्।',
+      };
+    }
+
+    // ── Run TFLite ────────────────────────
+    final interpreter = await Interpreter.fromAsset(
+      'assets/models/detectderm_model.tflite',
+      options: InterpreterOptions()..threads = 2,
+    );
+
+    var input = List.generate(
+      1,
+      (_) => List.generate(
+        224,
+        (y) => List.generate(
+          224,
+          (x) {
+            final pixel = image!.getPixel(x, y);
+            return [
+              pixel.r / 255.0,
+              pixel.g / 255.0,
+              pixel.b / 255.0,
+            ];
+          },
+        ),
+      ),
+    );
+
+    var output = List.generate(1, (_) => List.filled(4, 0.0));
+    interpreter.run(input, output);
+    interpreter.close();
+
+    final scores = output[0];
+    int predictedClass = 0;
+    double maxScore = scores[0];
+    for (int i = 1; i < scores.length; i++) {
+      if (scores[i] > maxScore) {
+        maxScore = scores[i];
+        predictedClass = i;
+      }
+    }
+
+    final confidence = maxScore * 100;
+
+    // Low confidence → not skin disease
+    if (confidence < 75.0) {
+      return {
+        'error': 'not_skin',
+        'message': 'छाला रोग स्पष्ट देखिएन!\n'
+            'छालाको affected area को\n'
+            'नजिकबाट clear photo खिच्नुस्।',
+      };
+    }
+
+    final disease = diseases[predictedClass];
+    return {
+      'scan_id': 0,
+      'disease_en': disease['name_en'],
+      'disease_np': disease['name_np'],
+      'advice_np': disease['advice_np'],
+      'confidence': '${confidence.toStringAsFixed(2)}%',
+      'is_offline': true,
+    };
+  } catch (e) {
+    return {'error': 'Prediction failed: $e'};
   }
+}
 
   // ── Smart predict (Auto Online/Offline) ──
   static Future<Map<String, dynamic>> predict(
