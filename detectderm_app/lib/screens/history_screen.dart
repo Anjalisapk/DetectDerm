@@ -11,8 +11,38 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
 
+  //  Variables
   String _userName = '';
   List<dynamic> _history = [];
+  bool _isLoading = true;
+
+  //  initState
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  //  API function
+  Future<void> _loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    final userName = prefs.getString('user_name') ?? '';
+
+    setState(() => _userName = userName);
+
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final history = await ApiService.getHistory(userId);
+
+    setState(() {
+      _history = history;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: Column(
         children: [
 
-          //  Header section (new)
+          //  Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -64,11 +94,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
 
-          // placeholder (later replace with list)
-          const Expanded(
-            child: Center(
-              child: Text('History Screen'),
-            ),
+          //  Loading / Placeholder
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : const Center(child: Text('History Screen')),
           ),
         ],
       ),
