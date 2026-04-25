@@ -1,23 +1,17 @@
 from flask import Flask, request, jsonify
 from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input  # ← ADD!
 from PIL import Image
 import numpy as np
 import io
 import sqlite3
 from datetime import datetime
 import hashlib
-import os
 
 app = Flask(__name__)
 
-# ── Absolute DB Path ──────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'detectderm.db')
-
-# ── Initialize Database ───────────────────────────────
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
 
     c.execute('''CREATE TABLE IF NOT EXISTS user (
@@ -91,7 +85,7 @@ def init_db():
 
             (1, 'Melanocytic Nevus', 'मेलानोसाइटिक नेभस (तिल)',
              '''🔍 रोग बारे:
-मेलानोसाइटिक नेभस अर्थात् सामान्य तिल हो। यो छालाको melanocyte कोशिकाहरूको सामान्य वृद्धि हो।
+मेलानोसाइटिक नेभस अर्थात् सामान्य तिल हो।
 
 📌 कारणहरू:
 - जन्मजात हुन सक्छ (Birthmark)
@@ -109,14 +103,14 @@ def init_db():
 
 💊 सल्लाह:
 - सामान्य तिल हो — धेरै चिन्ता नगर्नुहोस्
-- ABCDE rule याद राख्नुहोस् (Asymmetry, Border, Color, Diameter, Evolving)
+- ABCDE rule याद राख्नुहोस्
 - तिलमा परिवर्तन भएमा डाक्टर देखाउनुहोस्
 - घाममा सनस्क्रिन लगाउनुहोस्
 - वर्षमा एकपटक skin check गराउनुहोस्'''),
 
             (2, 'Melanoma', 'मेलानोमा (छाला क्यान्सर)',
              '''🔍 रोग बारे:
-मेलानोमा सबैभन्दा खतरनाक छाला क्यान्सर हो। यो छालाको रंग बनाउने melanocyte कोशिकाहरूबाट सुरु हुन्छ।
+मेलानोमा सबैभन्दा खतरनाक छाला क्यान्सर हो।
 
 📌 कारणहरू:
 - अत्यधिक UV rays exposure
@@ -140,37 +134,34 @@ def init_db():
 - परिवारका सदस्यलाई पनि check गराउनुहोस्'''),
         ]
         c.executemany("INSERT INTO disease VALUES (?,?,?,?)", diseases)
-        print(" Disease data inserted! (3 classes)")
+        print("Disease data inserted!")
 
     conn.commit()
     conn.close()
-    print(f" Database ready! Path: {DB_PATH}")
+    print("Database ready!")
 
 # ── Load model ────────────────────────────────────────
 model = load_model(r'E:\DetectDerm\models\detectderm_3class.h5')
-print(" Model loaded!")
+print("Model loaded!")
 init_db()
 
-# ── Hash password ─────────────────────────────────────
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# ── Preprocess image ──────────────────────────────────
+# ── KEY FIX: preprocess_input use गर्नुस् ─────────────
 def preprocess_image(image_bytes):
     img = Image.open(io.BytesIO(image_bytes))
     img = img.convert('RGB')
     img = img.resize((224, 224))
     img_array = np.array(img, dtype=np.float32)
-    img_array = preprocess_input(img_array)  # ← MobileNetV2 preprocessing
+    img_array = preprocess_input(img_array)        # ← FIX!
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-# ── Route: API status ─────────────────────────────────
 @app.route('/')
 def home():
-    return jsonify({'message': ' DetectDerm API is running!'})
+    return jsonify({'message': 'DetectDerm API is running!'})
 
-# ── Route: Register ───────────────────────────────────
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -178,7 +169,7 @@ def register():
        'email' not in data or 'password' not in data:
         return jsonify({'error': 'Name, email र password चाहिन्छ!'}), 400
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
     try:
         c.execute(
@@ -199,14 +190,13 @@ def register():
         conn.close()
         return jsonify({'error': 'Email already registered!'}), 400
 
-# ── Route: Login ──────────────────────────────────────
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     if not data or 'email' not in data or 'password' not in data:
         return jsonify({'error': 'Email र password चाहिन्छ!'}), 400
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
     c.execute(
         "SELECT user_id, name, email FROM user WHERE email=? AND password=?",
@@ -224,7 +214,6 @@ def login():
         })
     return jsonify({'error': 'Email वा password गलत छ!'}), 401
 
-# ── Route: Predict ────────────────────────────────────
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'image' not in request.files:
@@ -233,7 +222,7 @@ def predict():
     user_id = request.form.get('user_id', None)
     image_bytes = request.files['image'].read()
 
-    # ── Image quality check ───────────────────────────
+    # ── Image Quality Check ───────────────────────────
     pil_img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
     img_array_check = np.array(pil_img)
     avg_brightness = np.mean(img_array_check)
@@ -267,7 +256,7 @@ def predict():
         }), 400
 
     # ── Save to DB ────────────────────────────────────
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
     c.execute(
         "INSERT INTO scan (user_id, image_path, scanned_at) VALUES (?,?,?)",
@@ -295,14 +284,13 @@ def predict():
         'confidence': f'{confidence:.2f}%'
     })
 
-# ── Route: Feedback ───────────────────────────────────
 @app.route('/feedback', methods=['POST'])
 def feedback():
     data = request.get_json()
     if not data or 'scan_id' not in data or 'rating' not in data:
         return jsonify({'error': 'scan_id र rating चाहिन्छ!'}), 400
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
     c.execute(
         "INSERT INTO feedback (scan_id, rating, comment, submitted_at) VALUES (?,?,?,?)",
@@ -314,10 +302,9 @@ def feedback():
     conn.close()
     return jsonify({'message': 'Feedback saved'})
 
-# ── Route: History ────────────────────────────────────
 @app.route('/history/<int:user_id>', methods=['GET'])
 def history(user_id):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('detectderm.db')
     c = conn.cursor()
     c.execute('''
         SELECT s.scan_id, s.scanned_at, d.name_en,
@@ -338,6 +325,5 @@ def history(user_id):
         'confidence': f'{r[4]:.2f}%'
     } for r in rows])
 
-# ── Run ───────────────────────────────────────────────
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
