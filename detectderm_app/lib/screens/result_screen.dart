@@ -10,8 +10,6 @@ class ResultScreen extends StatelessWidget {
     switch (diseaseEn) {
       case 'Melanoma':
         return Colors.red;
-      case 'Actinic Keratosis':
-        return Colors.orange;
       case 'Benign Keratosis':
         return Colors.blue;
       case 'Melanocytic Nevus':
@@ -26,8 +24,6 @@ class ResultScreen extends StatelessWidget {
     switch (diseaseEn) {
       case 'Melanoma':
         return Icons.warning_amber_rounded;
-      case 'Actinic Keratosis':
-        return Icons.wb_sunny_rounded;
       case 'Benign Keratosis':
         return Icons.check_circle_rounded;
       case 'Melanocytic Nevus':
@@ -42,8 +38,6 @@ class ResultScreen extends StatelessWidget {
     switch (diseaseEn) {
       case 'Melanoma':
         return Colors.red;
-      case 'Actinic Keratosis':
-        return Colors.orange;
       case 'Benign Keratosis':
         return Colors.blue;
       case 'Melanocytic Nevus':
@@ -58,8 +52,6 @@ class ResultScreen extends StatelessWidget {
     switch (diseaseEn) {
       case 'Melanoma':
         return Icons.warning_amber_rounded;
-      case 'Actinic Keratosis':
-        return Icons.wb_sunny_rounded;
       case 'Benign Keratosis':
         return Icons.info_rounded;
       case 'Melanocytic Nevus':
@@ -74,8 +66,6 @@ class ResultScreen extends StatelessWidget {
     switch (diseaseEn) {
       case 'Melanoma':
         return '⚠️ यो गम्भीर रोग हो! तुरुन्तै छालाविज्ञ डाक्टरकहाँ जानुहोस्!';
-      case 'Actinic Keratosis':
-        return '⚠️ यो क्यान्सर पूर्वको अवस्था हो! चाँडै डाक्टर देखाउनुहोस्!';
       case 'Benign Keratosis':
         return 'ℹ️ यो सामान्य रोग हो तर डाक्टरसँग एकपटक check गराउनुहोस्।';
       case 'Melanocytic Nevus':
