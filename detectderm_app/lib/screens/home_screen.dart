@@ -348,13 +348,6 @@ class _HomeScreenState extends State<HomeScreen> {
               Colors.red,
             ),
             _buildDiseaseCard(
-              'एक्टिनिक केराटोसिस',
-              'Actinic Keratosis',
-              Icons.wb_sunny,
-              Colors.orange[100]!,
-              Colors.orange,
-            ),
-            _buildDiseaseCard(
               'सामान्य केराटोसिस',
               'Benign Keratosis',
               Icons.check_circle,
