@@ -94,11 +94,50 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
 
-          //  Loading / Placeholder
+          //  Loading / Empty / Placeholder
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : const Center(child: Text('History Screen')),
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : _history.isEmpty
+                    ? _buildEmptyState()
+                    : const Center(
+                        child: Text('History List Coming Soon'),
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  //  Empty State Widget
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.history,
+            size: 80,
+            color: Colors.grey[300],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'कुनै scan history छैन!',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[500],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'पहिले scan गर्नुस्',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[400],
+            ),
           ),
         ],
       ),
