@@ -11,10 +11,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // User info
   String _userName = 'Guest';
   bool _isGuest = true;
   int? _userId;
+  bool _isOnline = false;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -22,9 +22,24 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    _checkOnline();
   }
 
-  // ── Load user info from SharedPreferences ─
+  // ── Check internet connection ─────────────
+  Future<void> _checkOnline() async {
+    try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 3));
+      if (result.isNotEmpty &&
+          result[0].rawAddress.isNotEmpty) {
+        setState(() => _isOnline = true);
+      }
+    } catch (_) {
+      setState(() => _isOnline = false);
+    }
+  }
+
+  // ── Load user info ────────────────────────
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -34,25 +49,27 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // ── Pick image from Camera ────────────────
+  // ── Pick from camera ──────────────────────
   Future<void> _pickFromCamera() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 85,
     );
     if (image != null && mounted) {
-      Navigator.pushNamed(context, '/preview', arguments: image.path);
+      Navigator.pushNamed(
+          context, '/preview', arguments: image.path);
     }
   }
 
-  // ── Pick image from Gallery ───────────────
+  // ── Pick from gallery ─────────────────────
   Future<void> _pickFromGallery() async {
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
     );
     if (image != null && mounted) {
-      Navigator.pushNamed(context, '/preview', arguments: image.path);
+      Navigator.pushNamed(
+          context, '/preview', arguments: image.path);
     }
   }
 
@@ -61,8 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16)),
         title: const Text('Logout'),
-        content: const Text('के तपाईं logout गर्न चाहनुहुन्छ?'),
+        content:
+            const Text('के तपाईं logout गर्न चाहनुहुन्छ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -70,10 +90,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
+              final prefs =
+                  await SharedPreferences.getInstance();
               await prefs.clear();
               if (!mounted) return;
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushReplacementNamed(
+                  context, '/login');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -91,15 +113,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
 
-      // ── App Bar ───────────────────────────
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
         automaticallyImplyLeading: false,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.health_and_safety, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
+            Icon(Icons.health_and_safety,
+                color: Colors.white),
+            SizedBox(width: 8),
+            Text(
               'DetectDerm',
               style: TextStyle(
                 color: Colors.white,
@@ -109,18 +131,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          // History button (registered user only)
+          // Online/Offline indicator
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Icon(
+              _isOnline ? Icons.wifi : Icons.wifi_off,
+              color: _isOnline
+                  ? Colors.greenAccent
+                  : Colors.orange,
+              size: 20,
+            ),
+          ),
+          // History (registered only)
           if (!_isGuest)
             IconButton(
-              icon: const Icon(Icons.history, color: Colors.white),
-              onPressed: () {
-                Navigator.pushNamed(context, '/history');
-              },
+              icon: const Icon(Icons.history,
+                  color: Colors.white),
+              onPressed: () =>
+                  Navigator.pushNamed(context, '/history'),
               tooltip: 'History',
             ),
-          // Logout button
+          // Logout
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
+            icon: const Icon(Icons.logout,
+                color: Colors.white),
             onPressed: _logout,
             tooltip: 'Logout',
           ),
@@ -140,7 +174,10 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF2E7D32), Color(0xFF4CAF50)],
+                  colors: [
+                    Color(0xFF2E7D32),
+                    Color(0xFF4CAF50)
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -155,21 +192,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 children: [
-                  // Avatar
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: Colors.white.withOpacity(0.3),
+                    backgroundColor:
+                        Colors.white.withOpacity(0.3),
                     child: Icon(
-                      _isGuest ? Icons.person_outline : Icons.person,
+                      _isGuest
+                          ? Icons.person_outline
+                          : Icons.person,
                       color: Colors.white,
                       size: 30,
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Welcome text
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
                       children: [
                         Text(
                           'नमस्ते, $_userName!',
@@ -181,8 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Text(
                           _isGuest
-                              ? 'Guest Mode — History save हुँदैन'
-                              : 'Registered User',
+                              ? _isOnline
+                                  ? 'Guest Mode — History save हुँदैन'
+                                  : 'Offline Guest Mode'
+                              : 'Registered User ✅',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
@@ -191,16 +232,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  // Guest badge
                   if (_isGuest)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.orange,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius:
+                            BorderRadius.circular(10),
                       ),
                       child: const Text(
                         'Guest',
@@ -215,9 +254,41 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
 
-            // ── Instruction text ──────────────
+            // ── Offline Banner ────────────────
+            if (!_isOnline)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border:
+                      Border.all(color: Colors.orange[300]!),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.wifi_off,
+                        color: Colors.orange, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Offline Mode — TFLite model use हुन्छ। Scan history save हुँदैन।',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            if (!_isOnline) const SizedBox(height: 12),
+
+            // ── Title ─────────────────────────
             const Text(
               'छाला रोग पहिचान गर्नुस्',
               style: TextStyle(
@@ -239,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
             // ── Camera Button ─────────────────
             SizedBox(
@@ -327,7 +398,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // ── Info Cards ────────────────────
+            // ── Disease list ──────────────────
             const Text(
               'पहिचान गर्न सकिने रोगहरू:',
               style: TextStyle(
@@ -339,41 +410,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 12),
 
-            // Disease cards
-            _buildDiseaseCard(
-              'मेलानोमा',
-              'Melanoma',
-              Icons.warning_amber,
-              Colors.red[100]!,
-              Colors.red,
-            ),
-            _buildDiseaseCard(
-              'सामान्य केराटोसिस',
-              'Benign Keratosis',
-              Icons.check_circle,
-              Colors.blue[100]!,
-              Colors.blue,
-            ),
-            _buildDiseaseCard(
-              'मेलानोसाइटिक नेभस',
-              'Melanocytic Nevus',
-              Icons.circle,
-              Colors.green[100]!,
-              Colors.green,
-            ),
+            _buildDiseaseCard('मेलानोमा', 'Melanoma',
+                Icons.warning_amber, Colors.red[100]!, Colors.red),
+            _buildDiseaseCard('सामान्य केराटोसिस',
+                'Benign Keratosis', Icons.check_circle,
+                Colors.blue[100]!, Colors.blue),
+            _buildDiseaseCard('मेलानोसाइटिक नेभस (तिल)',
+                'Melanocytic Nevus', Icons.circle,
+                Colors.green[100]!, Colors.green),
 
             const SizedBox(height: 20),
 
-            // ── Guest register prompt ─────────
-            if (_isGuest)
+            // ── Register prompt (Online + Guest मात्र) ─
+            if (_isGuest && _isOnline)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.blue[50],
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[200]!),
+                  border:
+                      Border.all(color: Colors.blue[200]!),
                 ),
                 child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     const Row(
                       children: [
@@ -391,23 +451,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'Account बनाएमा scan history save हुन्छ र पछि हेर्न सकिन्छ।',
-                      style: TextStyle(fontSize: 13, color: Colors.blue),
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.blue),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/register');
-                        },
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.pushNamed(
+                            context, '/register'),
+                        icon: const Icon(Icons.person_add,
+                            size: 18),
+                        label:
+                            const Text('Register गर्नुस्'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius:
+                                BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Register गर्नुस्'),
                       ),
                     ),
                   ],
@@ -421,17 +485,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Disease info card widget ──────────────
-  Widget _buildDiseaseCard(
-    String nameNp,
-    String nameEn,
-    IconData icon,
-    Color bgColor,
-    Color iconColor,
-  ) {
+  // ── Disease card widget ───────────────────
+  Widget _buildDiseaseCard(String nameNp, String nameEn,
+      IconData icon, Color bgColor, Color iconColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
@@ -443,20 +503,14 @@ class _HomeScreenState extends State<HomeScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                nameNp,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              Text(
-                nameEn,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
-              ),
+              Text(nameNp,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14)),
+              Text(nameEn,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600])),
             ],
           ),
         ],
