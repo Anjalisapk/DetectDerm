@@ -5,10 +5,13 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 
 class ApiService {
-  // ── Flask API URL ────────────────────────
+  // ── Flask API URL ─────────────────────────────────
   static const String baseUrl = 'http://192.168.1.76:5000';
 
-  // ── Disease names (Offline mode लागि) ────
+  // ── 3 Disease classes (Training order अनुसार!) ───
+  // 0: benign_keratosis
+  // 1: melanocytic_nevus
+  // 2: melanoma
   static const List<Map<String, String>> diseases = [
     {
       'name_en': 'Benign Keratosis',
@@ -38,37 +41,37 @@ class ApiService {
 - वर्षमा एकपटक छालाविज्ञ डाक्टरलाई देखाउनुहोस्''',
     },
     {
-      'name_en': 'Actinic Keratosis',
-      'name_np': 'एक्टिनिक केराटोसिस',
+      'name_en': 'Melanocytic Nevus',
+      'name_np': 'मेलानोसाइटिक नेभस (तिल)',
       'advice_np': '''🔍 रोग बारे:
-एक्टिनिक केराटोसिस घामको UV किरणले गर्दा हुने छाला रोग हो।
+मेलानोसाइटिक नेभस अर्थात् सामान्य तिल हो। यो छालाको melanocyte कोशिकाहरूको सामान्य वृद्धि हो।
 
 📌 कारणहरू:
-- लामो समय घाम (UV rays) मा बस्दा
-- हल्का छालाका मान्छेमा बढी हुन्छ
-- कमजोर immune system
-- धेरै वर्षसम्म घाममा काम गर्दा
-- Tanning bed को प्रयोग
+- जन्मजात हुन सक्छ (Birthmark)
+- घाम लाग्दा नयाँ तिल निस्कन सक्छ
+- Hormonal changes (गर्भावस्था, puberty)
+- आनुवंशिक कारण
+- उमेरसँगै तिल बढ्न सक्छ
 
 ⚠️ लक्षणहरू:
-- खस्रो, सुख्खा धब्बा देखिन्छ
-- रातो, गुलाबी वा खैरो रंगको हुन्छ
-- छुँदा बालुवा जस्तो महसुस हुन्छ
-- खुजली वा जलन हुन सक्छ
-- कहिलेकाहीँ रगत आउन सक्छ
+- गोलो वा अण्डाकार आकार
+- खैरो, कालो वा गुलाबी रंग
+- सामान्यतया 6mm भन्दा सानो
+- सपाट वा थोरै उठेको हुन्छ
+- सामान्यतया दुख्दैन वा खुजली लाग्दैन
 
 💊 सल्लाह:
-- चाँडै छालाविज्ञ डाक्टरकहाँ जानुहोस्
-- उपचार नगरेमा क्यान्सर हुन सक्छ
-- घाममा जाँदा SPF 30+ सनस्क्रिन लगाउनुहोस्
-- टोपी र लामो बाहुला लगाउनुहोस्
-- डाक्टरले cream वा laser treatment गर्न सक्छन्''',
+- सामान्य तिल हो — धेरै चिन्ता नगर्नुहोस्
+- ABCDE rule याद राख्नुहोस्
+- तिलमा परिवर्तन भएमा डाक्टर देखाउनुहोस्
+- घाममा सनस्क्रिन लगाउनुहोस्
+- वर्षमा एकपटक skin check गराउनुहोस्''',
     },
     {
       'name_en': 'Melanoma',
       'name_np': 'मेलानोमा (छाला क्यान्सर)',
       'advice_np': '''🔍 रोग बारे:
-मेलानोमा सबैभन्दा खतरनाक छाला क्यान्सर हो।
+मेलानोमा सबैभन्दा खतरनाक छाला क्यान्सर हो। यो छालाको रंग बनाउने melanocyte कोशिकाहरूबाट सुरु हुन्छ।
 
 📌 कारणहरू:
 - अत्यधिक UV rays exposure
@@ -91,43 +94,20 @@ class ApiService {
 - नियमित check-up गराउनुहोस्
 - परिवारका सदस्यलाई पनि check गराउनुहोस्''',
     },
-    {
-      'name_en': 'Melanocytic Nevus',
-      'name_np': 'मेलानोसाइटिक नेभस (तिल)',
-      'advice_np': '''🔍 रोग बारे:
-मेलानोसाइटिक नेभस अर्थात् सामान्य तिल हो।
-
-📌 कारणहरू:
-- जन्मजात हुन सक्छ (Birthmark)
-- घाम लाग्दा नयाँ तिल निस्कन सक्छ
-- Hormonal changes (गर्भावस्था, puberty)
-- आनुवंशिक कारण
-- उमेरसँगै तिल बढ्न सक्छ
-
-⚠️ लक्षणहरू:
-- गोलो वा अण्डाकार आकार
-- खैरो, कालो वा गुलाबी रंग
-- सामान्यतया 6mm भन्दा सानो
-- सपाट वा थोरै उठेको हुन्छ
-- सामान्यतया दुख्दैन वा खुजली लाग्दैन
-
-💊 सल्लाह:
-- सामान्य तिल हो — धेरै चिन्ता नगर्नुहोस्
-- ABCDE rule याद राख्नुहोस् (Asymmetry, Border, Color, Diameter, Evolving)
-- तिलमा परिवर्तन भएमा डाक्टर देखाउनुहोस्
-- घाममा सनस्क्रिन लगाउनुहोस्
-- वर्षमा एकपटक skin check गराउनुहोस्''',
-    },
   ];
 
-  // ── Register new user ────────────────────
+  // ── Register ──────────────────────────────────────
   static Future<Map<String, dynamic>> register(
       String name, String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'name': name, 'email': email, 'password': password}),
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password
+        }),
       );
       return jsonDecode(response.body);
     } catch (e) {
@@ -135,7 +115,7 @@ class ApiService {
     }
   }
 
-  // ── Login existing user ──────────────────
+  // ── Login ─────────────────────────────────────────
   static Future<Map<String, dynamic>> login(
       String email, String password) async {
     try {
@@ -150,7 +130,7 @@ class ApiService {
     }
   }
 
-  // ── Online predict (Flask API) ───────────
+  // ── Online predict (Flask Api) ────────────────────────────────
   static Future<Map<String, dynamic>> predictOnline(
       String imagePath, {int? userId}) async {
     try {
@@ -166,140 +146,132 @@ class ApiService {
       final body = await response.stream.bytesToString();
       return jsonDecode(body);
     } catch (e) {
-      // Online failed → trigger offline
       return {'error': 'offline'};
     }
   }
 
-  // ── Offline predict (TFLite) ─────────────
+  // ── Offline predict (TFLite) ──────────────────────
   static Future<Map<String, dynamic>> predictOffline(
-    String imagePath) async {
-  try {
-    final imageFile = File(imagePath);
-    final imageBytes = await imageFile.readAsBytes();
-    img.Image? image = img.decodeImage(imageBytes);
-    image = img.copyResize(image!, width: 224, height: 224);
+      String imagePath) async {
+    try {
+      final imageFile = File(imagePath);
+      final imageBytes = await imageFile.readAsBytes();
+      img.Image? image = img.decodeImage(imageBytes);
+      image = img.copyResize(image!, width: 224, height: 224);
 
-    // ── Image Quality Check ───────────────
-    double totalBrightness = 0;
-    List<double> pixelValues = [];
+      // ── Image Quality Check ────────────────────────
+      double totalBrightness = 0;
+      List<double> pixelValues = [];
 
-    for (int y = 0; y < 224; y++) {
-      for (int x = 0; x < 224; x++) {
-        final pixel = image.getPixel(x, y);
-        final brightness = (pixel.r + pixel.g + pixel.b) / 3;
-        totalBrightness += brightness;
-        pixelValues.add(brightness.toDouble());
+      for (int y = 0; y < 224; y++) {
+        for (int x = 0; x < 224; x++) {
+          final pixel = image.getPixel(x, y);
+          final brightness = (pixel.r + pixel.g + pixel.b) / 3;
+          totalBrightness += brightness;
+          pixelValues.add(brightness.toDouble());
+        }
       }
-    }
 
-    final avgBrightness = totalBrightness / (224 * 224);
+      final avgBrightness = totalBrightness / (224 * 224);
+      double totalVariance = 0;
+      for (var val in pixelValues) {
+        totalVariance += (val - avgBrightness) * (val - avgBrightness);
+      }
+      final variance = totalVariance / pixelValues.length;
 
-    // Variance calculate
-    double totalVariance = 0;
-    for (var val in pixelValues) {
-      totalVariance += (val - avgBrightness) * (val - avgBrightness);
-    }
-    final variance = totalVariance / pixelValues.length;
+      if (avgBrightness < 30) {
+        return {
+          'error': 'not_skin',
+          'message': 'Photo धेरै अँध्यारो छ!\n'
+              'राम्रो प्रकाशमा photo खिच्नुस्।',
+        };
+      }
 
-    // Too dark
-    if (avgBrightness < 30) {
-      return {
-        'error': 'not_skin',
-        'message': 'Photo धेरै अँध्यारो छ!\n'
-            'राम्रो प्रकाशमा छालाको photo खिच्नुस्।',
-      };
-    }
+      if (variance < 150) {
+        return {
+          'error': 'not_skin',
+          'message': 'यो छालाको photo होइन!\n'
+              'छालाको affected area को photo खिच्नुस्।',
+        };
+      }
 
-    // Too uniform - not skin (solid color/black/white)
-    if (variance < 150) {
-      return {
-        'error': 'not_skin',
-        'message': 'यो छालाको photo होइन!\n'
-            'छालाको affected area को\n'
-            'नजिकबाट clear photo खिच्नुस्।',
-      };
-    }
+      // ── TFLite run ─────────────────────────────────
+      final interpreter = await Interpreter.fromAsset(
+        'assets/models/detectderm_offline.tflite', // ← Updated!
+        options: InterpreterOptions()..threads = 2,
+      );
 
-    // ── Run TFLite ────────────────────────
-    final interpreter = await Interpreter.fromAsset(
-      'assets/models/detectderm_model.tflite',
-      options: InterpreterOptions()..threads = 2,
-    );
-
-    var input = List.generate(
-      1,
-      (_) => List.generate(
-        224,
-        (y) => List.generate(
+      // ── MobileNetV2 preprocessing: (pixel/127.5)-1.0 ──
+      var input = List.generate(
+        1,
+        (_) => List.generate(
           224,
-          (x) {
-            final pixel = image!.getPixel(x, y);
-            return [
-              pixel.r / 255.0,
-              pixel.g / 255.0,
-              pixel.b / 255.0,
-            ];
-          },
+          (y) => List.generate(
+            224,
+            (x) {
+              final pixel = image!.getPixel(x, y);
+              return [
+                (pixel.r / 127.5) - 1.0,  // ← KEY FIX!
+                (pixel.g / 127.5) - 1.0,  // ← KEY FIX!
+                (pixel.b / 127.5) - 1.0,  // ← KEY FIX!
+              ];
+            },
+          ),
         ),
-      ),
-    );
+      );
 
-    var output = List.generate(1, (_) => List.filled(4, 0.0));
-    interpreter.run(input, output);
-    interpreter.close();
+      // ── Output: 3 classes! ─────────────────────────
+      var output = List.generate(1, (_) => List.filled(3, 0.0));
+      interpreter.run(input, output);
+      interpreter.close();
 
-    final scores = output[0];
-    int predictedClass = 0;
-    double maxScore = scores[0];
-    for (int i = 1; i < scores.length; i++) {
-      if (scores[i] > maxScore) {
-        maxScore = scores[i];
-        predictedClass = i;
+      final scores = output[0];
+      int predictedClass = 0;
+      double maxScore = scores[0];
+      for (int i = 1; i < scores.length; i++) {
+        if (scores[i] > maxScore) {
+          maxScore = scores[i];
+          predictedClass = i;
+        }
       }
-    }
 
-    final confidence = maxScore * 100;
+      final confidence = maxScore * 100;
 
-    // Low confidence → not skin disease
-    if (confidence < 75.0) {
+      if (confidence < 50.0) {
+        return {
+          'error': 'not_skin',
+          'message': 'छाला रोग स्पष्ट देखिएन!\n'
+              'नजिकबाट clear photo खिच्नुस्।',
+        };
+      }
+
+      final disease = diseases[predictedClass];
       return {
-        'error': 'not_skin',
-        'message': 'छाला रोग स्पष्ट देखिएन!\n'
-            'छालाको affected area को\n'
-            'नजिकबाट clear photo खिच्नुस्।',
+        'scan_id': 0,
+        'disease_en': disease['name_en'],
+        'disease_np': disease['name_np'],
+        'advice_np': disease['advice_np'],
+        'confidence': '${confidence.toStringAsFixed(2)}%',
+        'is_offline': true,
       };
+    } catch (e) {
+      return {'error': 'Prediction failed: $e'};
     }
-
-    final disease = diseases[predictedClass];
-    return {
-      'scan_id': 0,
-      'disease_en': disease['name_en'],
-      'disease_np': disease['name_np'],
-      'advice_np': disease['advice_np'],
-      'confidence': '${confidence.toStringAsFixed(2)}%',
-      'is_offline': true,
-    };
-  } catch (e) {
-    return {'error': 'Prediction failed: $e'};
   }
-}
 
-  // ── Smart predict (Auto Online/Offline) ──
+  // ── Smart predict (Auto Online/Offline) ──────────
   static Future<Map<String, dynamic>> predict(
       String imagePath, {int? userId}) async {
-    // Try online first
-    final onlineResult = await predictOnline(imagePath, userId: userId);
+    final onlineResult = await predictOnline(
+        imagePath, userId: userId);
 
-    // If online failed → use offline TFLite
     if (onlineResult['error'] == 'offline') {
       return await predictOffline(imagePath);
     }
-
     return onlineResult;
   }
 
-  // ── Save feedback ────────────────────────
+  // ── Save feedback ─────────────────────────────────
   static Future<Map<String, dynamic>> saveFeedback(
       int scanId, int rating, String comment) async {
     try {
@@ -318,7 +290,7 @@ class ApiService {
     }
   }
 
-  // ── Get scan history ─────────────────────
+  // ── Get history ───────────────────────────────────
   static Future<List<dynamic>> getHistory(int userId) async {
     try {
       final response = await http.get(
