@@ -11,19 +11,19 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
 
-  //  Variables
+  // 🔹 Variables
   String _userName = '';
   List<dynamic> _history = [];
   bool _isLoading = true;
 
-  //  initState
+  // 🔹 initState
   @override
   void initState() {
     super.initState();
     _loadHistory();
   }
 
-  //  API function
+  // 🔹 API function
   Future<void> _loadHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -60,7 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: Column(
         children: [
 
-          //  Header
+          // 🔹 Header
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -94,16 +94,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
 
-          //  Loading / Empty / Placeholder
+          // 🔹 Loading / Empty / LIST
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : _history.isEmpty
                     ? _buildEmptyState()
-                    : const Center(
-                        child: Text('History List Coming Soon'),
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _history.length,
+                        itemBuilder: (context, index) {
+                          return _buildHistoryCard(_history[index], index);
+                        },
                       ),
           ),
         ],
@@ -111,17 +113,65 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  //  Empty State Widget
+  // 🔹 HISTORY CARD UI (NEW)
+  Widget _buildHistoryCard(Map<String, dynamic> item, int index) {
+    final diseaseEn = item['disease_en'] ?? 'Unknown';
+    final diseaseNp = item['disease_np'] ?? '';
+    final confidence = item['confidence'] ?? '0%';
+    final scannedAt = item['scanned_at'] ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.green.withOpacity(0.1),
+          child: const Icon(Icons.health_and_safety, color: Colors.green),
+        ),
+        title: Text(
+          diseaseNp,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(diseaseEn),
+            const SizedBox(height: 4),
+            Text(
+              'Confidence: $confidence',
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              scannedAt,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+          ],
+        ),
+        trailing: Text(
+          '#${index + 1}',
+          style: const TextStyle(color: Colors.grey),
+        ),
+      ),
+    );
+  }
+
+  // 🔹 Empty State
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.history,
-            size: 80,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.history, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'कुनै scan history छैन!',
