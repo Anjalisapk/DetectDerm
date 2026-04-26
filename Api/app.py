@@ -325,5 +325,44 @@ def history(user_id):
         'confidence': f'{r[4]:.2f}%'
     } for r in rows])
 
+# ── Route: Reset Password ─────────────────────────────
+@app.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    if not data or 'email' not in data or \
+       'new_password' not in data:
+        return jsonify(
+            {'error': 'Email र new password चाहिन्छ!'}
+        ), 400
+
+    conn = sqlite3.connect('detectderm.db')
+    c = conn.cursor()
+
+    # Email existing check
+    c.execute(
+        "SELECT user_id FROM user WHERE email=?",
+        (data['email'],)
+    )
+    user = c.fetchone()
+
+    if not user:
+        conn.close()
+        return jsonify(
+            {'error': 'Email registered छैन!'}
+        ), 404
+
+    # Password update
+    c.execute(
+        "UPDATE user SET password=? WHERE email=?",
+        (hash_password(data['new_password']),
+         data['email'])
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify(
+        {'message': 'Password reset सफल भयो!'}
+    )
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
