@@ -301,4 +301,22 @@ class ApiService {
       return [];
     }
   }
+    // ── Reset password ────────────────────────────────────
+  static Future<Map<String, dynamic>> resetPassword(
+      String email, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'new_password': newPassword,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'error': 'Server connect हुन सकेन!'};
+    }
+  }
+      
 }
