@@ -82,9 +82,8 @@ class ResultScreen extends StatelessWidget {
     final adviceNp = result['advice_np'] ?? '';
     final confidence = result['confidence'] ?? '0%';
     final scanId = result['scan_id'] ?? 0;
-    final isOffline = result['is_offline'] ?? false;
 
-    // skip feedback flag
+    final isOffline = result['is_offline'] ?? false;
     final skipFeedback = result['skip_feedback'] ?? false;
 
     final diseaseColor = _getDiseaseColor(diseaseEn);
@@ -229,8 +228,8 @@ class ResultScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ──  CONDITIONAL FEEDBACK BUTTON ──
-            if (!skipFeedback) ...[
+            // ── CONDITIONAL FEEDBACK ─────────
+            if (!skipFeedback && !isOffline) ...[
               SizedBox(
                 height: 52,
                 child: ElevatedButton.icon(
@@ -245,17 +244,39 @@ class ResultScreen extends StatelessWidget {
                   label: const Text(
                     'Feedback दिनुस्',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ] else if (isOffline) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        color: Colors.orange, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Offline mode मा feedback save हुँदैन।',
+                        style: TextStyle(
+                            color: Colors.orange, fontSize: 12),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
