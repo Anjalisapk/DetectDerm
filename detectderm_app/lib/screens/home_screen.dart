@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? _isOnline
                                   ? 'Guest Mode — History save हुँदैन'
                                   : 'Offline Guest Mode'
-                              : 'Registered User ✅',
+                              : 'Registered User ',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
